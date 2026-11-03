@@ -49,6 +49,7 @@ export default function App() {
   const [visibleFloors, setVisibleFloors] = useState(model.floors.length);
   const [showRoof, setShowRoof] = useState(false);
   const [topView, setTopView] = useState(false);
+  const [cutaway, setCutaway] = useState(true);
   const [tab, setTab] = useState<'chat' | 'view'>('chat');
   const fileRef = useRef<HTMLInputElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
@@ -171,6 +172,7 @@ export default function App() {
             <span className="sep" />
             <button className={!topView ? 'on' : ''} onClick={() => setTopView(false)}>3D</button>
             <button className={topView ? 'on' : ''} onClick={() => setTopView(true)}>Plan</button>
+            <button className={!cutaway ? 'on' : ''} onClick={() => setCutaway((c) => !c)} title="Show walls at full height">Full walls</button>
             <button className={showRoof ? 'on' : ''} onClick={() => setShowRoof((s) => !s)}>Roof</button>
             {model.floors.length > 1 && (
               <select value={visibleFloors} onChange={(e) => setVisibleFloors(+e.target.value)}>
@@ -189,7 +191,7 @@ export default function App() {
         </div>
 
         <div className="viewer">
-          <ErrorBoundary><House3D model={model} selectedId={selected} onSelect={setSelected} visibleFloors={visibleFloors} showRoof={showRoof} topView={topView} /></ErrorBoundary>
+          <ErrorBoundary><House3D model={model} selectedId={selected} onSelect={setSelected} visibleFloors={visibleFloors} showRoof={showRoof} topView={topView} cutaway={cutaway} /></ErrorBoundary>
           {isSample && <div className="badge">Sample design · chat to make yours</div>}
           {sel && (
             <div className="editor">

@@ -36,8 +36,8 @@ function wallSegments(L: number, H: number, ops: Opening[]): Seg[] {
   return segs.filter((s) => s.y1 - s.y0 > 0.01 && s.b - s.a > 0.01);
 }
 
-function RoomMesh({ room, base, H, W, D, wallColor, selected, onSelect, showLabel }: {
-  room: Room; base: number; H: number; W: number; D: number; wallColor: string;
+function RoomMesh({ room, base, H, W, D, wallColor, selected, onSelect, showLabel, cut }: {
+  room: Room; base: number; H: number; cut: boolean; W: number; D: number; wallColor: string;
   selected: boolean; onSelect: (id: string) => void; showLabel: boolean;
 }) {
   // plan (x,y) -> world (x - W/2, -, D/2 - y); front of plot faces +z
@@ -49,8 +49,11 @@ function RoomMesh({ room, base, H, W, D, wallColor, selected, onSelect, showLabe
   const sides: Array<['front' | 'back' | 'left' | 'right', number]> = [
     ['front', room.w], ['back', room.w], ['left', room.d], ['right', room.d],
   ];
+  const open = room.type === 'parking' || room.type === 'balcony';
+  const wallH = open ? 0.9 : cut ? 1.2 : H - 0.05;
   for (const [side, L] of sides) {
-    wallSegments(L, H - 0.05, ops.filter((o) => o.wall === side)).forEach((s, i) => {
+    if (open && side === 'front') continue;
+    wallSegments(L, wallH, ops.filter((o) => o.wall === side)).forEach((s, i) => {
       const mid = (s.a + s.b) / 2, len = s.b - s.a, h = s.y1 - s.y0, y = base + s.y0 + h / 2;
       let pos: [number, number, number], size: [number, number, number];
       if (side === 'front') { pos = [wx(room.x + mid), y, wz(room.y) - T / 2]; size = [len, h, T]; }
@@ -110,9 +113,9 @@ function Roof({ model, base, W, D }: { model: HouseModel; base: number; W: numbe
   );
 }
 
-export default function House3D({ model, selectedId, onSelect, visibleFloors, showRoof, topView }: {
+export default function House3D({ model, selectedId, onSelect, visibleFloors, showRoof, topView, cutaway }: {
   model: HouseModel; selectedId: string | null; onSelect: (id: string | null) => void;
-  visibleFloors: number; showRoof: boolean; topView: boolean;
+  visibleFloors: number; showRoof: boolean; topView: boolean; cutaway: boolean;
 }) {
   const W = model.plot.width, D = model.plot.depth;
   const bases = useMemo(() => {
@@ -122,7 +125,7 @@ export default function House3D({ model, selectedId, onSelect, visibleFloors, sh
   const shown = model.floors.slice(0, visibleFloors);
   const roofBase = bases[shown.length - 1] + (shown[shown.length - 1]?.height ?? 0);
   const span = Math.max(W, D);
-  const cam: [number, number, number] = topView ? [0, span * 1.9, 0.01] : [span * 0.9, span * 1.0, span * 1.3];
+  const cam: [number, number, number] = topView ? [0, span * 1.9, 0.01] : [span * 0.7, span * 1.35, span * 1.2];
 
   return (
     <Canvas key={topView ? 'top' : '3d'} shadows camera={{ position: cam, fov: 40 }} gl={{ preserveDrawingBuffer: true }}
@@ -141,7 +144,7 @@ export default function House3D({ model, selectedId, onSelect, visibleFloors, sh
           {f.rooms.map((r) => (
             <RoomMesh key={r.id} room={r} base={bases[i]} H={f.height} W={W} D={D}
               wallColor={model.style.wall} selected={r.id === selectedId} onSelect={onSelect}
-              showLabel={i === shown.length - 1} />
+              showLabel={i === shown.length - 1} cut={cutaway && !showRoof && i === shown.length - 1} />
           ))}
           {i > 0 && f.rooms.map((r) => (
             <mesh key={`slab${r.id}`} position={[r.x + r.w / 2 - W / 2, bases[i] - 0.05, D / 2 - (r.y + r.d / 2)]}>
