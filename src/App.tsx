@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import House3D, { ROOM_COLORS } from './House3D';
+import ErrorBoundary from './ErrorBoundary';
 import { SAMPLE_HOUSE } from './sample';
 import type { ChatMsg, HouseModel, Room, RoomType } from './types';
 import './App.css';
@@ -188,7 +189,7 @@ export default function App() {
         </div>
 
         <div className="viewer">
-          <House3D model={model} selectedId={selected} onSelect={setSelected} visibleFloors={visibleFloors} showRoof={showRoof} topView={topView} />
+          <ErrorBoundary><House3D model={model} selectedId={selected} onSelect={setSelected} visibleFloors={visibleFloors} showRoof={showRoof} topView={topView} /></ErrorBoundary>
           {isSample && <div className="badge">Sample design · chat to make yours</div>}
           {sel && (
             <div className="editor">
